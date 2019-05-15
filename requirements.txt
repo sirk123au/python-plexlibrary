@@ -1,0 +1,5 @@
+# pip install -r requirments.txt
+plexapi
+requests
+trakt
+ruamel.yaml
