@@ -13,3 +13,4 @@ syntax: glob
 config.yml
 recipes/*.yml
 Missing*
+testjson.py
