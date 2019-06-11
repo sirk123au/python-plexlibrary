@@ -14,3 +14,4 @@ config.yml
 recipes/*.yml
 Missing*
 testjson.py
+data.json
