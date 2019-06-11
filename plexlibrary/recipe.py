@@ -712,9 +712,6 @@ class Recipe(object):
                 radarr.add_movie(item['id'],item['title'])
 
 
-
-
-
     def weighted_sorting(self, item_list):
         def _get_non_theatrical_release(release_dates):
             # Returns earliest release date that is not theatrical
