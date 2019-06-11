@@ -28,20 +28,18 @@ def add_movie(imdbid , title):
             titleslug = i["titleSlug"]
             hasfile = i["hasFile"]
             if hasfile:
-                print('{} ({}) already Exists in Radarr...'.format(title,year))
-                print("\n")                
+                print('{} ({}) already Exists in Radarr...\n'.format(title,year))               
                 return
             else:
                 print("{} ({}) already Exists in Radarr, But Not Downloaded...".format(title, year))
                 movie_search(title)
-                print("\n")
                 return
     
     headers = {"Content-type": "application/json"}
     url = "{}/api/movie/lookup/imdb?imdbId={}&apikey={}".format(config['radarr']['baseurl'], imdbid, config['radarr']['api_key'] )
     rsp = requests.get(url, headers=headers)
     if rsp.text == "": 
-        print("No imdb info Found for {}.".format(title))
+        print("No imdb info Found for {}.\n".format(title))
         return
     data = json.loads(rsp.text)
     tmdbid = data["tmdbId"]
@@ -69,8 +67,7 @@ def add_movie(imdbid , title):
     
     url = '{}/api/movie'.format(config['radarr']['baseurl'])
     rsp = requests.post(url, headers=headers, data=data)
-    print("{} Added to Radarr".format(title))
-    print("\n")
+    print("{} ({}) Added to Radarr\n".format(title,year))
 
 def movie_search(title):
     
@@ -93,4 +90,4 @@ def movie_search(title):
             url = "{}/api/command?apikey={}".format(config['radarr']['baseurl'], config['radarr']['api_key'])
             data = json.dumps({"name": "MoviesSearch", "movieIds": [i['id']]})
             rsp = requests.post(url, headers=headers , data=data)
-            print("Searching For {} ({})".format(i['title'],i['year']))   
+            print("Searching For {} ({})\n".format(i['title'],i['year']))   
