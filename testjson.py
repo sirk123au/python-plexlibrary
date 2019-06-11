@@ -1,28 +1,37 @@
 import requests
 import json
 from datetime import datetime 
+import os
 
 
-headers = {"Content-type": "application/json", "X-Api-Key": "a6db7a0ddf18311f7b97d78ee6d8806ff"}
-url = "https://cloud.kdata.net.au/radarr/api/movie"
-rsp = requests.get(url, headers=headers)
-data = json.loads(rsp.text)
+
+if not os.path.exists('data.json'):
+	headers = {"Content-type": "application/json", "X-Api-Key": "a6db7a0ddf18311f7b97d78ee6d8806ff"}
+	url = "https://cloud.kdata.net.au/radarr/api/movie"
+	rsp = requests.get(url, headers=headers)
+	data = json.loads(rsp.text)
+	with open('data.json', 'w') as outfile: json.dump(data, outfile)
+else:
+	with open('data.json') as json_file:
+		data = json.load(json_file)
 
 for i in data:
-    if i['title'] == 'All Nighter':
-		headers = {"Content-type": "application/json"}
-		url = "https://cloud.kdata.net.au/radarr/api/command?apikey=a6db7a0ddf18311f7b97d78ee6d8806ff"
-		RID = i['id']
-		data = json.dumps({"name": "MoviesSearch", "movieIds": [RID]})
-		rsp = requests.post(url, headers=headers , data=data)
-		print("Searching For {}".format(i['title']))
-		print(data)
-		print(rsp.text)
+	if i['title'] == 'All Nighter':
+		tmdbid = i["tmdbId"]
+		title = i["title"]
+		year = i["year"]
+		poster=i["images"][0]['url']
+		titleslug = i["titleSlug"]
+		hasfile = i["hasFile"]
+
+		print (hasfile)
+		#print(json.dumps(i, indent=4, sort_keys=True))
 
 # headers = {"Content-type": "application/json", "X-Api-Key": "a6db7a0ddf18311f7b97d78ee6d8806ff"}
 # url = "https://cloud.kdata.net.au/radarr/api/command"
 # data = {'name': 'RefreshMovie' , 'movieId': "{}".format(tmdbid)}
 # rsp = requests.get(url, headers=headers , data=data)
+
 
 # headers = {"Content-type": "application/json"}
 # params = (
@@ -33,6 +42,9 @@ for i in data:
 # url = "https://api.themoviedb.org/3/find/{}".format("tt0065214")
 # rsp = requests.get(url, headers=headers, params=params)
 # imdb_data = json.loads(rsp.text)
+
+
+
 # if imdb_data["movie_results"]: 
 # 	tmdbid = imdb_data["movie_results"][0]["id"]
 # 	title = imdb_data["movie_results"][0]["title"]

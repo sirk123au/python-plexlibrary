@@ -690,7 +690,8 @@ class Recipe(object):
             print(u"Number of items in the new library: {count}".format(
                 count=list_count))
         else:
-            if os.path.exists("Missing {}.txt".format(self.recipe['new_library']['name'])): os.remove("Missing {}.txt".format(self.recipe['new_library']['name']))
+            if os.path.exists("Missing {}.txt".format(self.recipe['new_library']['name'])): 
+                os.remove("Missing {}.txt".format(self.recipe['new_library']['name']))
             print(u"Running the recipe '{}'".format(self.recipe_name))
             missing_items, list_count = self._run()
             print(u"Number of items in the new library: {count}".format(
@@ -708,7 +709,7 @@ class Recipe(object):
                 f.write("{title} ({year})\n".format(title=item['title'], year=item['year']))
                 f.close()
                 # Add movies to radarr
-                radarr.add_movie(item['id'])
+                radarr.add_movie(item['id'],item['title'])
 
 
 
