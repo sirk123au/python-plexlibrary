@@ -23,7 +23,7 @@ class Plex(object):
         }
         if library_type == 'movie':
             params['type'] = 'movie'
-            params['agent'] = 'com.plexapp.agents.imdb'
+            params['agent'] = 'com.plexapp.agents.themoviedb'
             params['scanner'] = 'Plex Movie Scanner'
         elif library_type == 'tv':
             params['type'] = 'show'

@@ -14,7 +14,7 @@ Credit:
     https://gist.github.com/JonnyWong16/f5b9af386ea58e19bf18c09f2681df23
     by /u/SwiftPanda16
 """
-
+import os
 import argparse
 import sys
 
@@ -59,7 +59,7 @@ def main():
 
     r = Recipe(args.recipe)
     r.run(args.sort_only)
-
+    if os.path.exists('data.json'): os.remove('data.json')
     print("Done!")
 
 

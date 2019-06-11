@@ -12,6 +12,11 @@ import time
 import plexapi
 import ntpath
 
+# encoding=utf8
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
+
 import plexutils
 import tmdb
 import traktutils
@@ -19,7 +24,7 @@ import tvdb
 from config import ConfigParser
 from recipes import RecipeParser
 from utils import Colors, add_years
-
+import radarr
 
 class Recipe(object):
     plex = None
@@ -214,16 +219,10 @@ class Recipe(object):
                              continue
 
                         if folder_name == '.':
-                            if self.recipe['docker']['enabled']:
-                                new_path = os.path.join(self.recipe['docker']['dest_folder'],file_name)
-                            else:
-                                new_path = os.path.join(self.recipe['new_library']['folder'],file_name)
+                            new_path = os.path.join(self.recipe['new_library']['folder'],file_name)
                             dir = False
                         else:
-                            if self.recipe['docker']['enabled']:
-                                new_path = os.path.join(self.recipe['docker']['dest_folder'],folder_name)
-                            else:
-                                new_path = os.path.join(self.recipe['new_library']['folder'],folder_name)
+                            new_path = os.path.join(self.recipe['new_library']['folder'],folder_name)
                             dir = True
                             parent_path = os.path.dirname(os.path.abspath(new_path))
                             if not os.path.exists(parent_path):
@@ -248,8 +247,6 @@ class Recipe(object):
                                 else:
                                     if dir:
                                         #os.symlink(old_path, new_path)
-                                        dest_folder=self.recipe['docker']['dest_folder']
-                                        new_path = os.path.join(self.recipe['docker']['dest_folder'],folder_name)
                                         os.makedirs(new_path)
                                         link_cmd = "ln -rs " + '"{a}" '.format(a=orig_filename) + '"{b}"'.format(b=new_path)
                                         #print("running " +  link_cmd)
@@ -682,6 +679,7 @@ class Recipe(object):
                     self.recipe['new_library']['sort_title']['format'],
                     self.recipe['new_library']['sort_title']['visible'])
 
+
         return len(all_new_items)
 
     def run(self, sort_only=False):
@@ -692,6 +690,7 @@ class Recipe(object):
             print(u"Number of items in the new library: {count}".format(
                 count=list_count))
         else:
+            if os.path.exists("Missing {}.txt".format(self.recipe['new_library']['name'])): os.remove("Missing {}.txt".format(self.recipe['new_library']['name']))
             print(u"Running the recipe '{}'".format(self.recipe_name))
             missing_items, list_count = self._run()
             print(u"Number of items in the new library: {count}".format(
@@ -703,6 +702,17 @@ class Recipe(object):
                     idx=idx + 1, release=item.get('release_date', ''),
                     imdb_id=item['id'], title=item['title'],
                     year=item['year']))
+
+                # Add Missing movies to text File
+                f = open("Missing {}.txt".format(self.recipe['new_library']['name']), "a")
+                f.write("{title} ({year})\n".format(title=item['title'], year=item['year']))
+                f.close()
+                # Add movies to radarr
+                radarr.add_movie(item['id'])
+
+
+
+
 
     def weighted_sorting(self, item_list):
         def _get_non_theatrical_release(release_dates):
