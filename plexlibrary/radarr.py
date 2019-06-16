@@ -32,7 +32,7 @@ def add_movie(imdbid , title):
                 return
             else:
                 print("{} ({}) already Exists in Radarr, But Not Downloaded...".format(title, year))
-                movie_search(title)
+                if config['radarr']['searchForMovie'] == 'true': movie_search(title)
                 return
     
     headers = {"Content-type": "application/json"}
@@ -62,7 +62,7 @@ def add_movie(imdbid , title):
                     "covertype": "poster", 
                     "url": "{}".format(poster)
                    }],
-        "addOptions" : {"searchForMovie" : "true"}
+        "addOptions" : {"searchForMovie" : "{}".format(config['radarr']['searchForMovie'])}
         })
     
     url = '{}/api/movie'.format(config['radarr']['baseurl'])

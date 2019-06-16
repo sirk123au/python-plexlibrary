@@ -590,7 +590,7 @@ class Recipe(object):
         new_library = self.plex.server.library.section(
             self.recipe['new_library']['name'])
         while new_library.refreshing:
-            time.sleep(5)
+            time.sleep(10)
             new_library = self.plex.server.library.section(
                 self.recipe['new_library']['name'])
 
