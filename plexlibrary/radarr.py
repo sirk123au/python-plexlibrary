@@ -4,8 +4,10 @@ import requests
 import json
 from datetime import datetime 
 from config import ConfigParser
+import logging
 
-def add_movie(imdbid , title):
+
+def add_movie(imdbid):
     
     # Add Missing to Radarr Work in Progress
     config = ConfigParser()
@@ -20,26 +22,28 @@ def add_movie(imdbid , title):
         with open('data.json') as json_file: data = json.load(json_file)
 
     for i in data:
-        if i['title'] == title:
-            tmdbid = i["tmdbId"]
+        if i.get('imdbId','') == imdbid:
+            tmdbid = i.get('tmdbId','')
             title = i["title"]
             year = i["year"]
-            poster=i["images"][0]['url']
+            poster = i["images"][0]['url']
             titleslug = i["titleSlug"]
-            hasfile = i["hasFile"]
-            if hasfile:
+
+            if not i["isAvailable"]:
+                print('{} ({}) Has not been released yet...\n'.format(title,year))
+                return
+            if i["hasFile"]:
                 print('{} ({}) already Exists in Radarr...\n'.format(title,year))               
                 return
             else:
                 print("{} ({}) already Exists in Radarr, But Not Downloaded...".format(title, year))
-                if config['radarr']['searchForMovie'] == 'true': movie_search(title)
+                if config['radarr']['searchForMovie'] == 'true': movie_search(imdbid)
                 return
-    
     headers = {"Content-type": "application/json"}
     url = "{}/api/movie/lookup/imdb?imdbId={}&apikey={}".format(config['radarr']['baseurl'], imdbid, config['radarr']['api_key'] )
     rsp = requests.get(url, headers=headers)
     if rsp.text == "": 
-        print("No imdb info Found for {}.\n".format(title))
+        print("No imdb info Found...\n")
         return
     data = json.loads(rsp.text)
     tmdbid = data["tmdbId"]
@@ -69,7 +73,7 @@ def add_movie(imdbid , title):
     rsp = requests.post(url, headers=headers, data=data)
     print("{} ({}) Added to Radarr\n".format(title,year))
 
-def movie_search(title):
+def movie_search(imdbid):
     
     config = ConfigParser()
     if not os.path.exists('data.json'):
@@ -85,7 +89,7 @@ def movie_search(title):
             data = json.load(json_file)
 
     for i in data:
-        if i['title'] == title:
+        if i.get('imdbId','') == imdbid:
             headers = {"Content-type": "application/json"}
             url = "{}/api/command?apikey={}".format(config['radarr']['baseurl'], config['radarr']['api_key'])
             data = json.dumps({"name": "MoviesSearch", "movieIds": [i['id']]})

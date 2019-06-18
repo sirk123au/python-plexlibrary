@@ -690,8 +690,10 @@ class Recipe(object):
             print(u"Number of items in the new library: {count}".format(
                 count=list_count))
         else:
-            if os.path.exists("Missing {}.txt".format(self.recipe['new_library']['name'])): 
-                os.remove("Missing {}.txt".format(self.recipe['new_library']['name']))
+            #Remove old Missing txt file
+            filepath = os.path.join(os.getcwd() + "/Missing", "Missing {}.txt".format(self.recipe['new_library']['name']))
+            if os.path.exists(filepath): os.remove(filepath)
+
             print(u"Running the recipe '{}'".format(self.recipe_name))
             missing_items, list_count = self._run()
             print(u"Number of items in the new library: {count}".format(
@@ -705,11 +707,14 @@ class Recipe(object):
                     year=item['year']))
 
                 # Add Missing movies to text File
-                f = open("Missing {}.txt".format(self.recipe['new_library']['name']), "a")
+                path = os.getcwd() + "/Missing"
+                if not os.path.exists(path): os.makedirs(path)
+                textname = "Missing {}.txt".format(self.recipe['new_library']['name'])
+                f = open(os.path.join(path , textname ), "a")
                 f.write("{title} ({year})\n".format(title=item['title'], year=item['year']))
                 f.close()
                 # Add movies to radarr
-                radarr.add_movie(item['id'],item['title'])
+                radarr.add_movie(item['id'])
 
 
     def weighted_sorting(self, item_list):
