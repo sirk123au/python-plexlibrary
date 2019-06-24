@@ -25,6 +25,10 @@ from config import ConfigParser
 from recipes import RecipeParser
 from utils import Colors, add_years
 import radarr
+try:
+    from urllib.parse import urlparse
+except ImportError:
+     from urlparse import urlparse
 
 class Recipe(object):
     plex = None
@@ -78,13 +82,19 @@ class Recipe(object):
 
         # Get the trakt lists
         for url in self.recipe['source_list_urls']:
-            if 'api.trakt.tv' in url:
+            netloc = urlparse(url).netloc
+            if 'api.trakt.tv' in netloc:
                 (item_list, item_ids) = self.trakt.add_items(
                     self.library_type, url, item_list, item_ids,
-                    self.recipe['new_library']['max_age'] or 0)
+                    self.recipe['new_library']['max_age'] or 0)            
+            elif not 'api.trakt.tv' in netloc:
+                data = urlparse(url).path.split("/")
+                url = "https://api.trakt.tv/users/{}/lists/{}/items/{}".format(data[2],data[4],self.library_type)
+                (item_list, item_ids) = self.trakt.add_items(
+                    self.library_type, url, item_list, item_ids,
+                    self.recipe['new_library']['max_age'] or 0) 
             else:
-                raise Exception("Unsupported source list: {url}".format(
-                    url=url))
+                raise Exception("Unsupported source list: {url}".format(url=url))
 
         if self.recipe['weighted_sorting']['enabled']:
             if self.config['tmdb']['api_key']:
@@ -118,7 +128,7 @@ class Recipe(object):
         matching_total = 0
         nonmatching_idx = []
         max_count = self.recipe['new_library']['max_count']
-
+        total_items = len(item_list)
         for i, item in enumerate(item_list):
             match = False
             if max_count > 0 and matching_total >= max_count:
@@ -162,12 +172,18 @@ class Recipe(object):
                     matching_items.append(r)
 
             if match:
+                percent =  (float(total_items - i) / float(total_items) *100) -100
                 if self.recipe['new_library']['sort_title']['absolute']:
-                    print(u"{} {} ({})".format(
-                        i + 1, item['title'], item['year']))
+                    print('\033c')
+                    print '\rMatching: %s (%d%%)\n' % ("█"*(int(abs(percent))), abs(percent)), 
+                    print(u"{} {} ({})".format(i + 1, item['title'], item['year']))
+
                 else:
-               	    print(u"{} {} ({})".format(
-               	    matching_total, item['title'], item['year']))
+                    print('\033c')
+                    print '\rMatching: %s (%d%%)\n' % ("█"*(int(abs(percent))), abs(percent)),
+               	    print(u"{} {} ({})\n".format(matching_total, item['title'], item['year']))
+                     
+
             else:
                 missing_items.append((i, item))
                 nonmatching_idx.append(i)
@@ -177,6 +193,7 @@ class Recipe(object):
                 del item_list[i]
 
         # Create symlinks for all items in your library on the trakt watched
+        print('\033c')
         print(u"Creating symlinks for {count} matching items in the "
               u"library...".format(count=matching_total))
 
@@ -235,8 +252,7 @@ class Recipe(object):
                                     else:
                                         raise
                             # Clean up old, empty directories
-                            if (os.path.exists(new_path) and not os.listdir(new_path)):
-                                os.rmdir(new_path)
+                            if (os.path.exists(new_path) and not os.listdir(new_path)): os.rmdir(new_path)
                         if (dir and not os.path.exists(new_path)) or (not dir and not os.path.isfile(new_path)):
                             try:
                                 if os.name == 'nt':
@@ -246,13 +262,14 @@ class Recipe(object):
                                         subprocess.call(['mklink', new_path, old_path_file], shell=True)
                                 else:
                                     if dir:
-                                        #os.symlink(old_path, new_path)
-                                        os.makedirs(new_path)
-                                        link_cmd = "ln -rs " + '"{a}" '.format(a=orig_filename) + '"{b}"'.format(b=new_path)
-                                        #print("running " +  link_cmd)
-                                        os.system(link_cmd)
-                                    # else:
-                                    #     os.symlink(old_path_file, new_path)
+                                        if self.recipe['docker']['enabled']:
+                                            os.makedirs(new_path)
+                                            os.system('ln -rs "{}" "{}"'.format(orig_filename,new_path))
+
+                                        else:
+                                            os.symlink(old_path, new_path)
+                                    else:
+                                        os.symlink(old_path_file, new_path)
                                 count += 1
                                 new_items.append(movie)
                                 updated_paths.append(new_path)
@@ -684,16 +701,17 @@ class Recipe(object):
 
     def run(self, sort_only=False):
         if sort_only:
+            print('\033c')
             print(u"Running the recipe '{}', sorting only".format(
                 self.recipe_name))
             list_count = self._run_sort_only()
             print(u"Number of items in the new library: {count}".format(
                 count=list_count))
         else:
+            print('\033c')
             #Remove old Missing txt file
             filepath = os.path.join(os.getcwd() + "/Missing", "Missing {}.txt".format(self.recipe['new_library']['name']))
             if os.path.exists(filepath): os.remove(filepath)
-
             print(u"Running the recipe '{}'".format(self.recipe_name))
             missing_items, list_count = self._run()
             print(u"Number of items in the new library: {count}".format(
@@ -705,7 +723,6 @@ class Recipe(object):
                     idx=idx + 1, release=item.get('release_date', ''),
                     imdb_id=item['id'], title=item['title'],
                     year=item['year']))
-
                 # Add Missing movies to text File
                 path = os.getcwd() + "/Missing"
                 if not os.path.exists(path): os.makedirs(path)

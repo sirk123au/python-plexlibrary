@@ -4,14 +4,14 @@ import requests
 import json
 from datetime import datetime 
 from config import ConfigParser
-import logging
-
+import sys
 
 def add_movie(imdbid):
     
     # Add Missing to Radarr Work in Progress
     config = ConfigParser()
 
+      
     if not os.path.exists('data.json'):
         headers = {"Content-type": "application/json", "X-Api-Key": "{}".format(config['radarr']['api_key'])}
         url = "{}/api/movie".format(config['radarr']['baseurl'])
@@ -36,14 +36,19 @@ def add_movie(imdbid):
                 print('{} ({}) already Exists in Radarr...\n'.format(title,year))               
                 return
             else:
-                print("{} ({}) already Exists in Radarr, But Not Downloaded...".format(title, year))
-                if config['radarr']['searchForMovie'] == 'true': movie_search(imdbid)
+                if config['radarr']['searchForMovie'] == 'true':
+                    print("{} ({}) already Exists in Radarr, But Not Downloaded...".format(title, year)) 
+                    movie_search(imdbid)
+                else:
+                    print("{} ({}) already Exists in Radarr, But Not Downloaded, Search not Enabled... \n".format(title, year))
+
                 return
     headers = {"Content-type": "application/json"}
     url = "{}/api/movie/lookup/imdb?imdbId={}&apikey={}".format(config['radarr']['baseurl'], imdbid, config['radarr']['api_key'] )
     rsp = requests.get(url, headers=headers)
     if rsp.text == "": 
         print("No imdb info Found...\n")
+        time.sleep(0.5)
         return
     data = json.loads(rsp.text)
     tmdbid = data["tmdbId"]
@@ -73,6 +78,7 @@ def add_movie(imdbid):
     rsp = requests.post(url, headers=headers, data=data)
     print("{} ({}) Added to Radarr\n".format(title,year))
 
+
 def movie_search(imdbid):
     
     config = ConfigParser()
@@ -94,4 +100,4 @@ def movie_search(imdbid):
             url = "{}/api/command?apikey={}".format(config['radarr']['baseurl'], config['radarr']['api_key'])
             data = json.dumps({"name": "MoviesSearch", "movieIds": [i['id']]})
             rsp = requests.post(url, headers=headers , data=data)
-            print("Searching For {} ({})\n".format(i['title'],i['year']))   
+            print("Searching For {} ({})\n".format(i['title'],i['year']))
