@@ -88,9 +88,18 @@ class Recipe(object):
                     self.library_type, url, item_list, item_ids,
                     self.recipe['new_library']['max_age'] or 0)            
             elif not 'api.trakt.tv' in netloc:
-                data = urlparse(url).path.split("/")
-                url = "https://api.trakt.tv/users/{}/lists/{}/items/{}".format(data[2],data[4],self.library_type)
-                (item_list, item_ids) = self.trakt.add_items(
+                max_count = self.recipe['new_library']['max_count']
+                if max_count > 0: 
+                    data = urlparse(url).path.split("/")
+                    url = "https://api.trakt.tv/users/{}/lists/{}/items/{}?limit={}".format(
+                        data[2],data[4],self.library_type,max_count)
+                    (item_list, item_ids) = self.trakt.add_items(
+                        self.library_type, url, item_list, item_ids,
+                        self.recipe['new_library']['max_age'] or 0) 
+                else:
+                    url = "https://api.trakt.tv/users/{}/lists/{}/items/{}".format(
+                    data[2],data[4],self.library_type)
+                    (item_list, item_ids) = self.trakt.add_items(
                     self.library_type, url, item_list, item_ids,
                     self.recipe['new_library']['max_age'] or 0) 
             else:
