@@ -29,3 +29,11 @@ tvdb:
     username: ''
     api_key: ''
     user_key: ''
+
+# Radarr integration
+
+radarr:
+  api_key: ''
+  baseurl: ''
+  rootfolderpath: ''
+  searchForMovie: 'false
