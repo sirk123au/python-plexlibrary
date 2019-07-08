@@ -89,8 +89,8 @@ class Recipe(object):
                     self.recipe['new_library']['max_age'] or 0)            
             elif not 'api.trakt.tv' in netloc:
                 max_count = self.recipe['new_library']['max_count']
+                data = urlparse(url).path.split("/")
                 if max_count > 0: 
-                    data = urlparse(url).path.split("/")
                     url = "https://api.trakt.tv/users/{}/lists/{}/items/{}?limit={}".format(
                         data[2],data[4],self.library_type,max_count)
                     (item_list, item_ids) = self.trakt.add_items(
@@ -194,8 +194,9 @@ class Recipe(object):
                      
 
             else:
-                missing_items.append((i, item))
-                nonmatching_idx.append(i)
+                if max_count > 0 and matching_total >= max_count:
+                    missing_items.append((i, item))
+                    nonmatching_idx.append(i)
 
         if not self.recipe['new_library']['sort_title']['absolute']:
             for i in reversed(nonmatching_idx):
@@ -732,6 +733,7 @@ class Recipe(object):
                     idx=idx + 1, release=item.get('release_date', ''),
                     imdb_id=item['id'], title=item['title'],
                     year=item['year']))
+
                 # Add Missing movies to text File
                 path = os.getcwd() + "/Missing"
                 if not os.path.exists(path): os.makedirs(path)
@@ -740,8 +742,10 @@ class Recipe(object):
                 f.write("{title} ({year})\n".format(title=item['title'], year=item['year']))
                 f.close()
                 # Add movies to radarr
-                radarr.add_movie(item['id'])
-
+                if self.config['radarr']['add_to_radarr'] == 'true':
+                    radarr.add_movie(item['id'])
+                    time.sleep(0.5)
+                    print('\033c')
 
     def weighted_sorting(self, item_list):
         def _get_non_theatrical_release(release_dates):
