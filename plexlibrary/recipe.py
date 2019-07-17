@@ -296,34 +296,37 @@ class Recipe(object):
                         break
                     for part in episode.iterParts():
                         old_path_file = part.file
-                        old_path, file_name = os.path.split(old_path_file)
-
-                        folder_name = ''
+                        print(part.file)
+                        if self.recipe['docker']['enabled']:
+                            docker_mount = self.recipe['docker']['docker_mount']
+                            orig_folder = self.recipe['docker']['orig_folder']
+                            old_path = ntpath.dirname(old_path_file)
+                            old_path = old_path.replace(docker_mount, orig_folder)
+                            file_name = ntpath.basename(old_path_file)
+                            orig_filename = os.path.join(old_path,file_name)
+                        else:
+                            old_path, file_name = os.path.split(old_path_file)
+                            folder_name = ''
                         for library_config in self.source_library_config:
                             for f in library_config['folders']:
                                 if old_path.lower().startswith(f.lower()):
-                                    old_path = os.path.join(f,
-                                                            old_path.replace(f,
-                                                                             '').strip(
-                                                                os.sep).split(
-                                                                os.sep)[0])
+                                    old_path = os.path.join(f, old_path.replace(f,'').strip(os.sep).split(os.sep)[0])
                                     folder_name = os.path.relpath(old_path, f)
                                     break
                             else:
                                 continue
 
-                            new_path = os.path.join(
-                                self.recipe['new_library']['folder'],
-                                folder_name)
-
+                            new_path = os.path.join(self.recipe['new_library']['folder'], folder_name)
                             if not os.path.exists(new_path):
                                 try:
                                     if os.name == 'nt':
-                                        subprocess.call(['mklink', '/D',
-                                                         new_path, old_path],
-                                                        shell=True)
+                                        subprocess.call(['mklink', '/D', new_path, old_path], shell=True)
                                     else:
-                                        os.symlink(old_path, new_path)
+                                        if self.recipe['docker']['enabled']:
+                                            os.system('ln -rs "{}" "{}"'.format(old_path,new_path))
+                                            #print('ln -rs "{}" "{}"'.format(old_path,new_path))
+                                        else:
+                                            os.symlink(old_path, new_path)
                                     count += 1
                                     new_items.append(tv_show)
                                     updated_paths.append(new_path)

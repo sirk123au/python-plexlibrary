@@ -27,7 +27,6 @@ def list_recipes(directory=None):
     for name in recipes.get_recipes(directory):
         print("    {}".format(name))
 
-
 def main():
     sys.stdout = Logger()
     parser = argparse.ArgumentParser(
@@ -36,13 +35,9 @@ def main():
                      "based on a configuration recipe."),
         usage='%(prog)s [options] [<recipe>]',
     )
-    parser.add_argument('recipe', nargs='?',
-                        help='Create a library using this recipe')
-    parser.add_argument(
-        '-l', '--list-recipes', action='store_true',
-        help='list available recipes')
-    parser.add_argument(
-        '-s', '--sort-only', action='store_true', help='only sort the library')
+    parser.add_argument('recipe', nargs='?', help='Create a library using this recipe')
+    parser.add_argument('-l', '--list-recipes', action='store_true', help='list available recipes')
+    parser.add_argument('-s', '--sort-only', action='store_true', help='only sort the library')
 
     if len(sys.argv) == 1:
         parser.print_help()
