@@ -90,15 +90,16 @@ class Recipe(object):
             elif not 'api.trakt.tv' in netloc:
                 max_count = self.recipe['new_library']['max_count']
                 data = urlparse(url).path.split("/")
+
                 if max_count > 0: 
                     url = "https://api.trakt.tv/users/{}/lists/{}/items/{}?limit={}".format(
-                        data[2],data[4],self.library_type,max_count)
+                        data[2],data[4],self.library_type.replace('tv','shows'),max_count)
                     (item_list, item_ids) = self.trakt.add_items(
                         self.library_type, url, item_list, item_ids,
                         self.recipe['new_library']['max_age'] or 0) 
                 else:
                     url = "https://api.trakt.tv/users/{}/lists/{}/items/{}".format(
-                    data[2],data[4],self.library_type)
+                    data[2],data[4],self.library_type.replace('tv','shows'))
                     (item_list, item_ids) = self.trakt.add_items(
                     self.library_type, url, item_list, item_ids,
                     self.recipe['new_library']['max_age'] or 0) 
@@ -296,7 +297,6 @@ class Recipe(object):
                         break
                     for part in episode.iterParts():
                         old_path_file = part.file
-                        print(part.file)
                         if self.recipe['docker']['enabled']:
                             docker_mount = self.recipe['docker']['docker_mount']
                             orig_folder = self.recipe['docker']['orig_folder']
