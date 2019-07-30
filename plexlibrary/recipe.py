@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """recipe"""
-
+ 
 import datetime
 import errno
 import os
@@ -25,6 +25,7 @@ from config import ConfigParser
 from recipes import RecipeParser
 from utils import Colors, add_years
 import radarr
+import sonarr
 try:
     from urllib.parse import urlparse
 except ImportError:
@@ -79,27 +80,34 @@ class Recipe(object):
         item_list = []  # TODO Replace with dict, scrap item_ids?
         item_ids = []
         force_imdb_id_match = False
-
+        max_count = self.recipe['new_library']['max_count']
         # Get the trakt lists
         for url in self.recipe['source_list_urls']:
             netloc = urlparse(url).netloc
             if 'api.trakt.tv' in netloc:
+                if max_count > 0: url = url + "?limit={}".format(max_count)
                 (item_list, item_ids) = self.trakt.add_items(
-                    self.library_type, url, item_list, item_ids,
+                    self.library_type, url , item_list, item_ids,
                     self.recipe['new_library']['max_age'] or 0)            
             elif not 'api.trakt.tv' in netloc:
-                max_count = self.recipe['new_library']['max_count']
                 data = urlparse(url).path.split("/")
-
-                if max_count > 0: 
-                    url = "https://api.trakt.tv/users/{}/lists/{}/items/{}?limit={}".format(
-                        data[2],data[4],self.library_type.replace('tv','shows'),max_count)
+                if max_count > 0:
+                    if self.library_type == "tv":
+                        url = "https://api.trakt.tv/users/{}/lists/{}/items/{}?limit={}".format(
+                            data[2],data[4],self.library_type.replace('tv','shows'),max_count)
+                    else:
+                        url = "https://api.trakt.tv/users/{}/lists/{}/items/{}?limit={}".format(
+                            data[2],data[4],self.library_type,max_count)
                     (item_list, item_ids) = self.trakt.add_items(
                         self.library_type, url, item_list, item_ids,
                         self.recipe['new_library']['max_age'] or 0) 
                 else:
-                    url = "https://api.trakt.tv/users/{}/lists/{}/items/{}".format(
-                    data[2],data[4],self.library_type.replace('tv','shows'))
+                    if self.library_type == "tv":
+                        url = "https://api.trakt.tv/users/{}/lists/{}/items/{}".format(
+                            data[2],data[4],self.library_type.replace('tv','shows'))
+                    else:
+                         url = "https://api.trakt.tv/users/{}/lists/{}/items/{}".format(
+                            data[2],data[4],self.library_type)                       
                     (item_list, item_ids) = self.trakt.add_items(
                     self.library_type, url, item_list, item_ids,
                     self.recipe['new_library']['max_age'] or 0) 
@@ -137,7 +145,7 @@ class Recipe(object):
         missing_items = []
         matching_total = 0
         nonmatching_idx = []
-        max_count = self.recipe['new_library']['max_count']
+
         total_items = len(item_list)
         for i, item in enumerate(item_list):
             match = False
@@ -274,8 +282,8 @@ class Recipe(object):
                                 else:
                                     if dir:
                                         if self.recipe['docker']['enabled']:
-                                            os.makedirs(new_path)
-                                            os.system('ln -rs "{}" "{}"'.format(orig_filename,new_path))
+                                            #os.makedirs(new_path)
+                                            os.system('ln -rs "{}" "{}"'.format(old_path,new_path))
 
                                         else:
                                             os.symlink(old_path, new_path)
@@ -590,14 +598,30 @@ class Recipe(object):
         force_imdb_id_match = False
 
         # Get the trakt lists
+        max_count = self.recipe['new_library']['max_count']
+        # Get the trakt lists
         for url in self.recipe['source_list_urls']:
-            if 'api.trakt.tv' in url:
+            netloc = urlparse(url).netloc
+            if 'api.trakt.tv' in netloc:
                 (item_list, item_ids) = self.trakt.add_items(
                     self.library_type, url, item_list, item_ids,
-                    self.recipe['new_library']['max_age'] or 0)
+                    self.recipe['new_library']['max_age'] or 0)            
+            elif not 'api.trakt.tv' in netloc:
+                data = urlparse(url).path.split("/")
+                if max_count > 0: 
+                    url = "https://api.trakt.tv/users/{}/lists/{}/items/{}?limit={}".format(
+                        data[2],data[4],self.library_type.replace('tv','shows'),max_count)
+                    (item_list, item_ids) = self.trakt.add_items(
+                        self.library_type, url, item_list, item_ids,
+                        self.recipe['new_library']['max_age'] or 0) 
+                else:
+                    url = "https://api.trakt.tv/users/{}/lists/{}/items/{}".format(
+                    data[2],data[4],self.library_type.replace('tv','shows'))
+                    (item_list, item_ids) = self.trakt.add_items(
+                    self.library_type, url, item_list, item_ids,
+                    self.recipe['new_library']['max_age'] or 0) 
             else:
-                raise Exception("Unsupported source list: {url}".format(
-                    url=url))
+                raise Exception("Unsupported source list: {url}".format(url=url))
 
         if self.recipe['weighted_sorting']['enabled']:
             if self.config['tmdb']['api_key']:
@@ -715,11 +739,9 @@ class Recipe(object):
     def run(self, sort_only=False):
         if sort_only:
             print('\033c')
-            print(u"Running the recipe '{}', sorting only".format(
-                self.recipe_name))
+            print(u"Running the recipe '{}', sorting only".format(self.recipe_name))
             list_count = self._run_sort_only()
-            print(u"Number of items in the new library: {count}".format(
-                count=list_count))
+            print(u"Number of items in the new library: {count}".format(count=list_count))
         else:
             print('\033c')
             #Remove old Missing txt file
@@ -745,10 +767,16 @@ class Recipe(object):
                 f.write("{title} ({year})\n".format(title=item['title'], year=item['year']))
                 f.close()
                 # Add movies to radarr
-                if self.config['radarr']['add_to_radarr'] == 'true':
-                    radarr.add_movie(item['id'])
-                    time.sleep(0.5)
-                    print('\033c')
+                if self.library_type == 'movie':
+                    if self.config['radarr']['add_to_radarr'] == 'true':
+                        radarr.add_movie(item['id'])
+                        time.sleep(0.5)
+                        print('\033c')
+                else:
+                    if self.config['sonarr']['add_to_sonarr'] == 'true':
+                        sonarr.add_show(item['id'], item['title'])
+                        time.sleep(0.5)
+                        print('\033c')
 
     def weighted_sorting(self, item_list):
         def _get_non_theatrical_release(release_dates):

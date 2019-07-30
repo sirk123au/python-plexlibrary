@@ -15,8 +15,7 @@ class TheTVDB(object):
         if not self.token:
             self._refresh_token()
 
-        url = "https://api.thetvdb.com/series/{tvdb_id}".format(
-            tvdb_id=tvdb_id)
+        url = "https://api.thetvdb.com/series/{tvdb_id}".format(tvdb_id=tvdb_id)
         headers = {
             'Authorization': 'Bearer {token}'.format(token=self.token)
         }
