@@ -1,0 +1,77 @@
+# Supported types: movie, tv
+library_type: 'movie'
+
+# Source list(s)
+# * Experiment with the limits and order of the URLs below
+#   to get a different balance.
+source_list_urls:
+  - 'https://trakt.tv/users/pauls67/lists/british-comedy'
+  - 'https://trakt.tv/users/garyoke157/lists/british-comedy'
+  - 'https://trakt.tv/users/Triest/lists/british-comedy'
+  - 'https://trakt.tv/users/Sohinge/lists/british-comedy'
+  - 'https://trakt.tv/users/sceaduwyn/lists/british-comedy'
+  - 'https://trakt.tv/users/coldkeys/lists/british-comedy'
+  - 'https://trakt.tv/users/tkuser99/lists/british-comedy'
+  - 'https://trakt.tv/users/elefantgoesnumb/lists/british-comedys'
+  - 'https://trakt.tv/users/coldkeys/lists/classic-british-comedy'
+  - 'https://trakt.tv/users/hutchoo/lists/great-british-comedies'
+  - 'https://trakt.tv/users/TheLexal/lists/british-comedies-to-watch'
+  - 'https://trakt.tv/users/del74/lists/classic-british-comedy-films'
+  - 'https://trakt.tv/users/Sohinge/lists/british-comedy-movies'
+  - 'https://trakt.tv/users/Zippy72/lists/top-british-comedy-movies'
+  - 'https://trakt.tv/users/marcushann/lists/british-comedy-copy'
+  - 'https://trakt.tv/users/Terry_Tyas1969/lists/classic-british-comedy'
+  - 'https://trakt.tv/users/bolderman/lists/british-comedy-copy'
+  - 'https://trakt.tv/users/danielolobo/lists/top-20-british-comedies-independent'
+  - 'https://trakt.tv/users/emeponto/lists/british-comedy-guide-s-top-50-british-tv-sitcoms'
+  - 'https://trakt.tv/users/Silentbob101/lists/british-tv-comedies'
+  - 'https://trakt.tv/users/bogboy1978/lists/british-sex-comedy-list-by-cinema-shahawy'
+
+# Source library details
+source_libraries:
+  - name: 'Movies'
+    folders:
+      - '/home/hd15/sirk123au/mnt/gdrive/Media/Movies/'
+
+# New library details
+new_library:
+  name: 'British Comedy Movies'
+  folder: '/home/hd15/sirk123au/media/Movies/british-comedy/'
+  sort: false
+  sort_title:
+    format: '{title}'
+    visible: false
+    absolute: false  # Skips numbers for missing items
+  # Limit the age (in years) of items to be considered
+  # * 0 for no limit
+  max_age: 0
+  # Maximum number of items to keep in the library
+  max_count: 100
+  # Remove items that no longer exist in the source lists
+  remove_from_library: false
+  
+
+# Weighted sorting (requires TMDb API)
+weighted_sorting:
+  enabled: false
+  better_release_date: false
+  weights:
+    # Think of these as percentages,
+    # but they don't have to add up to 1.0
+    # * Additive
+    # * Higher value -> more important
+    index: 0.70
+    vote: 0.10
+    age: 0.15
+    random: 0.05
+    # Penalize (<0) or reward (>0) certain (TMDb) genres
+    # * Final weight is multipled by these values
+    genre_bias:
+      'TV Movie': 0.7
+      'Animation': 0.95
+
+docker: 
+    enabled: true
+    plex_folder: '/data/media/Movies/british-comedy/'
+    docker_mount: '/data/mnt/gdrive/Media/'
+    orig_folder: '/home/hd15/sirk123au/mnt/gdrive/Media/'

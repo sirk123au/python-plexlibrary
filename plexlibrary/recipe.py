@@ -8,7 +8,7 @@ import random
 import subprocess
 import sys
 import time
-
+import shutil
 import plexapi
 import ntpath
 
@@ -81,11 +81,21 @@ class Recipe(object):
         item_ids = []
         force_imdb_id_match = False
         max_count = self.recipe['new_library']['max_count']
+        #remove symlinks
+        ln_dir = self.recipe['new_library']['folder']
+        if os.path.exists(ln_dir):
+            print('Removing symlinks folder {}'.format(ln_dir))
+            try:
+                shutil.rmtree(ln_dir)
+            except:
+                print("Shit something went wrong.")
         # Get the trakt lists
         for url in self.recipe['source_list_urls']:
             netloc = urlparse(url).netloc
             if 'api.trakt.tv' in netloc:
-                if max_count > 0: url = url + "?limit={}".format(max_count)
+                if max_count > 0:
+                    if not (url.find('?limit=') != -1): 
+                        url = url + "?limit={}".format(max_count)
                 (item_list, item_ids) = self.trakt.add_items(
                     self.library_type, url , item_list, item_ids,
                     self.recipe['new_library']['max_age'] or 0)            
@@ -282,9 +292,7 @@ class Recipe(object):
                                 else:
                                     if dir:
                                         if self.recipe['docker']['enabled']:
-                                            #os.makedirs(new_path)
                                             os.system('ln -rs "{}" "{}"'.format(old_path,new_path))
-
                                         else:
                                             os.symlink(old_path, new_path)
                                     else:
@@ -463,19 +471,27 @@ class Recipe(object):
             count = 0
             updated_paths = []
             deleted_items = []
-            max_date = add_years((self.recipe['new_library']['max_age'] or 0) \
-                                 * -1)
+            max_date = add_years((self.recipe['new_library']['max_age'] or 0) * -1)
+            
             if self.library_type == 'movie':
                 for movie in imdb_map.values():
+                    
                     if not self.recipe['new_library']['remove_from_library']:
                         # Only remove older than max_age
-                        if not self.recipe['new_library']['max_age'] \
-                                or (max_date < movie.originallyAvailableAt):
+                        if not self.recipe['new_library']['max_age'] or (max_date < movie.originallyAvailableAt):
                             continue
 
                     for part in movie.iterParts():
                         old_path_file = part.file
-                        old_path, file_name = os.path.split(old_path_file)
+                        if self.recipe['docker']['enabled']:
+                           docker_mount = self.recipe['docker']['docker_mount']
+                           orig_folder = self.recipe['docker']['orig_folder']
+                           old_path = ntpath.dirname(old_path_file)
+                           old_path = old_path.replace(docker_mount, orig_folder)
+                           file_name = ntpath.basename(old_path_file)
+                           orig_filename = os.path.join(old_path,file_name)
+                        else:
+                            old_path, file_name = os.path.split(old_path_file)
 
                         folder_name = os.path.relpath(
                             old_path, self.recipe['new_library']['folder'])
@@ -503,6 +519,7 @@ class Recipe(object):
                                     else:
                                         os.remove(new_path)
                                 else:
+                                    print(new_path)
                                     assert os.path.islink(new_path)
                                     os.unlink(new_path)
                                 count += 1
@@ -769,7 +786,7 @@ class Recipe(object):
                 # Add movies to radarr
                 if self.library_type == 'movie':
                     if self.config['radarr']['add_to_radarr'] == 'true':
-                        radarr.add_movie(item['id'])
+                        radarr.add_movie(item['id'], item['title'])
                         time.sleep(0.5)
                         print('\033c')
                 else:
