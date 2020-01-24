@@ -36,8 +36,9 @@ radarr:
   api_key: ''
   baseurl: ''
   rootfolderpath: ''
-  searchForMovie: 'false
+  searchForMovie: 'false'
 
+# Sonarr integration
 sonarr:
   add_to_sonarr: 'true'
   api_key: ''
