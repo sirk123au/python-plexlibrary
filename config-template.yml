@@ -37,3 +37,10 @@ radarr:
   baseurl: ''
   rootfolderpath: ''
   searchForMovie: 'false
+
+sonarr:
+  add_to_sonarr: 'true'
+  api_key: ''
+  baseurl: ''
+  rootfolderpath: ''
+  searchForShow: 'false'
