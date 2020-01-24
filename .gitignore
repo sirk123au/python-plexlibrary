@@ -16,3 +16,12 @@ Missing*
 testjson.py
 data.json
 trakt_search.py
+get_imdbid.py
+show_list
+movies
+.vscode
+show_list
+sftp-config.json
+radarr_add_from_list.py
+radarr_remove_downloaded.py
+sonarr_add_from_list.py

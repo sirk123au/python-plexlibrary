@@ -1,0 +1,48 @@
+# Supported types: movie, tv
+library_type: 'movie'
+trakt_oauth: true  # Note: has to be run manually for the first time to generate a token which needs to be added to the config file
+
+# Source list(s)
+source_list_urls:
+  - 'https://trakt.tv/users/drew-casteo/lists/disney-movies'
+
+# Source library details
+source_libraries:
+  - name: 'Movies'
+    folders:
+      - '/home/hd15/sirk123au/mnt/gdrive/Media/Movies/'
+
+# New library details
+new_library:
+  name: 'Disney+ Movies'
+  folder: '/home/hd15/sirk123au/media/Movies/disney-movies/'
+  sort: true
+  sort_title:
+    format: '{number}.{title}'
+    visible: false
+    absolute: false
+  max_age: 2
+  max_count: 0
+  remove_from_library: true
+  remove_all_on_run: true
+
+
+# Weighted sorting (requires TMDb API)
+weighted_sorting:
+  enabled: false
+  better_release_date: false
+  weights:
+    index: 0.0
+    vote: 0.0
+    age: 0.0
+    random: 0.0
+    genre_bias:
+      'TV Movie': 0.0
+      'Animation': 0.0
+      'Family': 0.0
+
+docker: 
+    enabled: true
+    plex_folder: '/data/media/Movies/disney-movies/'
+    docker_mount: '/data/mnt/gdrive/Media/'
+    orig_folder: '/home/hd15/sirk123au/mnt/gdrive/Media/'
